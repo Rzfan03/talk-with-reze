@@ -39,6 +39,8 @@ Buka http://localhost:3000. Klik ikon pengaturan, pilih provider, tempel API key
 
 API key provider model disimpan terenkripsi di cookie `HttpOnly` di server, bukan di localStorage. Key demo provider juga hanya ada di server dan dipakai sebagai fallback saat user belum menyimpan key sendiri; key demo tidak pernah ikut ke browser. Key tidak ikut dikirim di body `/api/chat`, hanya dibaca oleh route handler. Key yang tersimpan di localStorage versi lama akan dihapus saat aplikasi dibuka dan perlu dimasukkan ulang. Key ElevenLabs tetap di server. Ganti nama file OG image setiap kali gambarnya berubah supaya cache sosial media tidak menampilkan versi lama. Chat yang memakai key demo dibatasi per IP.
 
+Persona dan aturan keamanan hanya ada di server. Route `/api/chat` membuang role `system` dari client, membatasi riwayat, dan memblokir pola jailbreak/prompt injection umum, termasuk obfuscation base64, rot13, homoglyph, dan HTML/unicode escape. Ini pertahanan heuristik berlapis, bukan jaminan absolut.
+
 ## Cara kerja
 
 1. Mikrofon menangkap suara. Web Speech API jadi pilihan pertama; kalau tidak tersedia, rekaman dikirim ke `/api/stt`.
@@ -55,7 +57,9 @@ API key provider model disimpan terenkripsi di cookie `HttpOnly` di server, buka
 - `components/Avatar.tsx` — animasi avatar.
 - `components/SettingsDialog.tsx` — pengaturan provider dan suara.
 - `lib/providers.ts` — preset provider dan penjaga SSRF.
-- `lib/store.ts` — state, persona, dan penyimpanan lokal.
+- `lib/store.ts` — state dan penyimpanan lokal.
+- `lib/persona.ts` — persona dan aturan keamanan yang hanya dipakai server.
+- `lib/jailbreak.ts` — deteksi heuristik jailbreak dan prompt injection.
 - `lib/key-crypto.ts`, `lib/key-cookie.ts` — enkripsi dan cookie API key provider.
 - `lib/voice.ts` — antrean TTS, STT, dan pemecah kalimat.
 - `lib/site.ts` — nama, deskripsi, dan URL situs.

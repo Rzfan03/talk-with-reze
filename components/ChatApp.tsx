@@ -5,7 +5,7 @@ import { Toaster, toast } from "react-hot-toast";
 import gsap from "gsap";
 import { Streamdown, type ControlsConfig, type StreamdownTranslations } from "streamdown";
 import { code } from "@streamdown/code";
-import { useApp, PERSONA, type Msg } from "@/lib/store";
+import { useApp, type Msg } from "@/lib/store";
 import { GROQ_BASE_URL, preset } from "@/lib/providers";
 
 const GROQ_DEMO_MODEL = "openai/gpt-oss-120b";
@@ -165,7 +165,7 @@ export default function ChatApp() {
     try {
       const p = preset(st.provider);
       const res = await fetch("/api/chat", { method: "POST", headers: { "content-type": "application/json" },
-        body: JSON.stringify({ provider: { kind: p.kind, baseURL: st.baseURL, modelId: st.model }, system: PERSONA, messages: history }) });
+        body: JSON.stringify({ provider: { kind: p.kind, baseURL: st.baseURL, modelId: st.model }, messages: history }) });
       if (!res.ok || !res.body) throw new Error((await res.text()) || "Gagal memanggil model.");
       const reader = res.body.getReader(), dec = new TextDecoder();
       for (;;) {
