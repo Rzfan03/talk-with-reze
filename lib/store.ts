@@ -70,4 +70,7 @@ export const useApp = create<State>()(persist((set) => ({
     ...c, msgs: c.msgs.map((m, i) => (i === c.msgs.length - 1 ? { ...m, ...p } : m)) }) })),
   edit: (id, index, content) => set((s) => ({ convos: s.convos.map((c) => c.id !== id ? c : {
     ...c, msgs: c.msgs.map((m, i) => (i === index ? { ...m, content } : m)) }) })),
-}), { name: "reze-voice" }));
+}), {
+  name: "reze-voice",
+  partialize: ({ apiKey, ...rest }) => rest,
+}));

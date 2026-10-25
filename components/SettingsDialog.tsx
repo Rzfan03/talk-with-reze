@@ -7,6 +7,7 @@ import { PRESETS, preset } from "@/lib/providers";
 
 const inp = "w-full rounded-[10px] border border-ln2 bg-bg px-3 py-2 outline-none focus:border-mu";
 const lab = "mb-1 block text-xs text-mu";
+const norm = (url: string) => url.replace(/\/$/, "");
 
 export default function SettingsDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
   const ref = useRef<HTMLDialogElement>(null);
@@ -15,14 +16,22 @@ export default function SettingsDialog({ open, onClose }: { open: boolean; onClo
   const [d, setD] = useState<Settings>(() => pickSettings(useApp.getState()));
   const [models, setModels] = useState<{ id: string; name: string }[]>([]);
   const [q, setQ] = useState(""), [st, setSt] = useState(""), [busy, setBusy] = useState(false);
+  const [key, setKey] = useState(""), [keyBusy, setKeyBusy] = useState(false);
+  const [saved, setSaved] = useState<{ hasKey: boolean; baseURL: string | null }>({ hasKey: false, baseURL: null });
   const up = (p: Partial<Settings>) => setD((x) => ({ ...x, ...p }));
+  const keyReady = saved.hasKey && saved.baseURL === norm(d.baseURL);
 
   useEffect(() => {
     const el = ref.current; if (!el) return;
     gsap.killTweensOf(el);
     const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
     if (open) {
-      setD(pickSettings(useApp.getState())); setModels([]); setSt(""); setQ("");
+      setD(pickSettings(useApp.getState())); setModels([]); setSt(""); setQ(""); setKey("");
+      setSaved({ hasKey: false, baseURL: null });
+      fetch("/api/key")
+        .then((r) => r.json())
+        .then((j) => setSaved({ hasKey: !!j.hasKey, baseURL: j.baseURL ?? null }))
+        .catch(() => {});
       if (!el.open) {
         gsap.set(el, reduce ? { opacity: 1, x: 0, scale: 1 } : { opacity: 0, y: 12, scale: 0.98 });
         el.showModal();
@@ -42,16 +51,62 @@ export default function SettingsDialog({ open, onClose }: { open: boolean; onClo
       { opacity: 1, y: 0, duration: reduce ? 0 : 0.18, ease: "power2.out", overwrite: true });
   }, [tab]);
 
+  async function saveKey() {
+    const value = key.trim();
+    if (!value) return keyReady;
+    setKeyBusy(true);
+    try {
+      const r = await fetch("/api/key", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ apiKey: value, baseURL: d.baseURL }),
+      });
+      const j = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(j.error ?? "Gagal menyimpan API key.");
+      setKey("");
+      setSaved({ hasKey: true, baseURL: j.baseURL ?? norm(d.baseURL) });
+      return true;
+    } finally {
+      setKeyBusy(false);
+    }
+  }
+
+  async function dropKey() {
+    setKeyBusy(true);
+    try {
+      await fetch("/api/key", { method: "DELETE" });
+      setKey("");
+      setSaved({ hasKey: false, baseURL: null });
+      setSt("API key dihapus.");
+    } catch {
+      setSt("Gagal menghapus API key.");
+    } finally {
+      setKeyBusy(false);
+    }
+  }
+
   async function load() {
     const p = preset(d.provider);
-    if (p.needKey && !d.apiKey.trim()) return setSt("Isi API key dulu.");
+    if (p.needKey && !key.trim() && !keyReady) return setSt("Isi API key dulu.");
     setBusy(true); setSt("Memuat model…");
     try {
+      if (key.trim()) await saveKey();
       const r = await fetch("/api/models", { method: "POST", headers: { "content-type": "application/json" },
-        body: JSON.stringify({ kind: p.kind, baseURL: d.baseURL, apiKey: d.apiKey }) });
+        body: JSON.stringify({ kind: p.kind, baseURL: d.baseURL }) });
       const j = await r.json();
       if (!r.ok) throw new Error(j.error);
       setModels(j.models); setSt(`${j.models.length} model ditemukan.`);
+    } catch (e: any) { setSt(e.message); } finally { setBusy(false); }
+  }
+
+  async function save() {
+    const p = preset(d.provider);
+    if (p.needKey && !key.trim() && !keyReady) return setSt("Isi API key dulu.");
+    setBusy(true); setSt("");
+    try {
+      if (key.trim()) await saveKey();
+      useApp.getState().setCfg({ ...d, apiKey: "" });
+      onClose();
     } catch (e: any) { setSt(e.message); } finally { setBusy(false); }
   }
 
@@ -76,7 +131,15 @@ export default function SettingsDialog({ open, onClose }: { open: boolean; onClo
               {PRESETS.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
             </select></div>
           <div><label className={lab}>Base URL</label><input className={inp} value={d.baseURL} onChange={(e) => up({ baseURL: e.target.value })} spellCheck={false} /></div>
-          <div><label className={lab}>API key</label><input className={inp} type="password" autoComplete="off" value={d.apiKey} onChange={(e) => up({ apiKey: e.target.value })} placeholder="Tempel API key di sini" /></div>
+          <div>
+            <div className="mb-1 flex items-center justify-between">
+              <label className="text-xs text-mu">API key</label>
+              {keyReady && <button type="button" onClick={dropKey} disabled={keyBusy} className="text-xs text-mu hover:text-tx disabled:opacity-50">Hapus key</button>}
+            </div>
+            <input className={inp} type="password" autoComplete="off" value={key} onChange={(e) => setKey(e.target.value)} disabled={keyBusy}
+              placeholder={keyReady ? "Tersimpan — isi untuk mengganti" : "Tempel API key di sini"} />
+            <p className="mt-1 text-[11px] text-mu">{keyReady ? "Tersimpan terenkripsi di server (HttpOnly)." : "Disimpan terenkripsi di server, bukan di browser."}</p>
+          </div>
           <div className="flex items-center gap-3">
             <button onClick={load} disabled={busy} className="inline-flex items-center gap-2 rounded-[10px] bg-el px-3.5 py-2 font-medium disabled:opacity-60"><RefreshCw size={16} className={busy ? "animate-spin" : ""} />Muat model</button>
             <span className="text-xs text-mu">{st}</span>
@@ -109,7 +172,7 @@ export default function SettingsDialog({ open, onClose }: { open: boolean; onClo
 
       <div className="flex justify-end gap-2 border-t border-ln px-4 py-3">
         <button onClick={onClose} className="rounded-[10px] bg-el px-3.5 py-2 font-medium">Batal</button>
-        <button onClick={() => { useApp.getState().setCfg(d); onClose(); }} className="rounded-[10px] bg-tx px-3.5 py-2 font-medium text-bg">Simpan</button>
+        <button onClick={save} disabled={busy} className="rounded-[10px] bg-tx px-3.5 py-2 font-medium text-bg disabled:opacity-60">Simpan</button>
       </div>
     </dialog>
   );

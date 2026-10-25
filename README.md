@@ -31,11 +31,12 @@ Buka http://localhost:3000. Klik ikon pengaturan, pilih provider, tempel API key
 
 | Variabel | Wajib | Fungsi |
 | --- | --- | --- |
+| `SESSION_SECRET` | Ya di production | Kunci enkripsi API key provider di cookie. Buat dengan `openssl rand -hex 32`. Di lokal ada fallback aman untuk development. |
 | `ELEVENLABS_API_KEY` | Tidak | Dipakai untuk TTS dan STT. Tanpa ini, suara balasan memakai TTS browser dan STT fallback tidak tersedia. |
 | `ELEVENLABS_VOICE_ID` | Tidak | Voice default ElevenLabs. Bisa juga diisi lewat menu Pengaturan. |
 | `NEXT_PUBLIC_SITE_URL` | Tidak | URL publik untuk canonical, sitemap, dan OG image. Di Vercel biasanya otomatis. |
 
-API key provider model tidak disimpan di server. Key tersebut disimpan di localStorage browser dan hanya dikirim ke route handler saat dibutuhkan. Key ElevenLabs tetap di server.
+API key provider model disimpan terenkripsi di cookie `HttpOnly` di server, bukan di localStorage. Key tidak ikut dikirim di body `/api/chat`, hanya dibaca oleh route handler. Key yang tersimpan di localStorage versi lama akan dihapus saat aplikasi dibuka dan perlu dimasukkan ulang. Key ElevenLabs tetap di server. Ganti nama file OG image setiap kali gambarnya berubah supaya cache sosial media tidak menampilkan versi lama.
 
 ## Cara kerja
 
@@ -46,7 +47,7 @@ API key provider model tidak disimpan di server. Key tersebut disimpan di localS
 
 ## Struktur
 
-- `app/api/chat`, `app/api/models`, `app/api/stt`, `app/api/tts` — route handler.
+- `app/api/chat`, `app/api/models`, `app/api/key`, `app/api/stt`, `app/api/tts` — route handler.
 - `app/layout.tsx` — metadata, SEO, dan JSON-LD.
 - `app/robots.ts`, `app/sitemap.ts`, `app/manifest.ts` — file SEO dan PWA.
 - `components/ChatApp.tsx` — sidebar, thread, composer, dan alur percakapan.
@@ -54,13 +55,14 @@ API key provider model tidak disimpan di server. Key tersebut disimpan di localS
 - `components/SettingsDialog.tsx` — pengaturan provider dan suara.
 - `lib/providers.ts` — preset provider dan penjaga SSRF.
 - `lib/store.ts` — state, persona, dan penyimpanan lokal.
+- `lib/key-crypto.ts`, `lib/key-cookie.ts` — enkripsi dan cookie API key provider.
 - `lib/voice.ts` — antrean TTS, STT, dan pemecah kalimat.
 - `lib/site.ts` — nama, deskripsi, dan URL situs.
-- `public/avatars` — aset avatar. `public/og-image.jpg` — gambar Open Graph.
+- `public/avatars` — aset avatar. `public/og-image-reze.jpg` — gambar Open Graph.
 
 ## Deploy
 
-Paling gampang lewat Vercel: import repo, tambahkan environment variable yang dibutuhkan, lalu deploy. `NEXT_PUBLIC_SITE_URL` boleh dikosongkan karena Vercel menyediakan domain produksi otomatis.
+Paling gampang lewat Vercel: import repo, tambahkan environment variable yang dibutuhkan (termasuk `SESSION_SECRET`), lalu deploy. `NEXT_PUBLIC_SITE_URL` boleh dikosongkan karena Vercel menyediakan domain produksi otomatis.
 
 Untuk Ollama atau LM Studio, jalankan aplikasi di mesin yang sama dengan model lokal. Alamat lokal dan privat sengaja diblokir di production untuk menghindari SSRF.
 

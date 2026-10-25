@@ -61,7 +61,7 @@ export const metadata: Metadata = {
     description: SITE_DESC,
     images: [
       {
-        url: "/og-image.jpg",
+        url: "/og-image-reze.jpg",
         width: 1280,
         height: 720,
         alt: "Avatar Reze — Talk With Reze, chat suara AI",
@@ -72,7 +72,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title,
     description: SITE_DESC,
-    images: [{ url: "/og-image.jpg", alt: "Avatar Reze — Talk With Reze" }],
+    images: [{ url: "/og-image-reze.jpg", alt: "Avatar Reze — Talk With Reze" }],
   },
   appleWebApp: {
     capable: true,
@@ -94,7 +94,7 @@ const jsonLd = {
   name: SITE_NAME,
   url: SITE_URL,
   description: SITE_DESC,
-  image: `${SITE_URL}/og-image.jpg`,
+  image: `${SITE_URL}/og-image-reze.jpg`,
   applicationCategory: "EntertainmentApplication",
   operatingSystem: "Web",
   inLanguage: "id-ID",
