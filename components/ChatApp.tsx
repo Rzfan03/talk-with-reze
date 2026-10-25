@@ -282,7 +282,7 @@ export default function ChatApp() {
         </div>
         <div className="flex items-center gap-2.5 border-t border-ln px-4 py-3.5">
           <Avatar src={DENJI} size={32} />
-          <div className="flex-1 leading-tight"><b className="font-medium">Wibu</b><small className="block text-xs text-mu">Mode lokal</small></div>
+          <div className="flex-1 leading-tight"><b className="font-medium">Wibu</b><small className="block text-xs text-mu">Pacar Reze</small></div>
           <button onClick={() => setOpenS(true)} aria-label="Pengaturan" className="grid size-8 place-items-center rounded-lg text-mu hover:bg-el hover:text-tx"><SlidersHorizontal size={18} /></button>
         </div>
       </aside>

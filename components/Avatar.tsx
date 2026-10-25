@@ -5,7 +5,7 @@ import { level } from "@/lib/voice";
 
 export type VState = "idle" | "listening" | "thinking" | "speaking";
 
-/** Avatar bulat. Saat `live`, GSAP menganimasikannya sesuai status suara. */
+// Avatar
 export function Avatar({ src, size = 28, state = "idle", live = false }: { src: string; size?: number; state?: VState; live?: boolean }) {
   const root = useRef<HTMLSpanElement>(null);
   const ring = useRef<HTMLSpanElement>(null);
