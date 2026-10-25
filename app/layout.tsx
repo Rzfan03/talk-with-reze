@@ -62,8 +62,8 @@ export const metadata: Metadata = {
     images: [
       {
         url: "/og-image.jpg",
-        width: 1200,
-        height: 630,
+        width: 1280,
+        height: 720,
         alt: "Avatar Reze — Talk With Reze, chat suara AI",
       },
     ],
