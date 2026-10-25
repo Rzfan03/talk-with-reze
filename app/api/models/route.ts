@@ -21,17 +21,17 @@ export async function POST(req: Request) {
     let models: Model[] = [];
 
     if (kind === "anthropic") {
-      const r = await fetch(`${base}/models?limit=100`, { headers: { "x-api-key": apiKey!, "anthropic-version": "2023-06-01" } });
+      const r = await fetch(`${base}/models?limit=100`, { headers: { "x-api-key": apiKey!, "anthropic-version": "2023-06-01" }, redirect: "error" });
       if (!r.ok) throw new Error(`Provider menjawab ${r.status}`);
       models = (await r.json()).data.map((m: any) => ({ id: m.id, name: m.display_name ?? m.id }));
     } else if (kind === "google") {
-      const r = await fetch(`${base}/models?pageSize=100`, { headers: { "x-goog-api-key": apiKey! } });
+      const r = await fetch(`${base}/models?pageSize=100`, { headers: { "x-goog-api-key": apiKey! }, redirect: "error" });
       if (!r.ok) throw new Error(`Provider menjawab ${r.status}`);
       models = (await r.json()).models
         .filter((m: any) => m.supportedGenerationMethods?.includes("generateContent"))
         .map((m: any) => ({ id: String(m.name).replace("models/", ""), name: m.displayName ?? m.name }));
     } else {
-      const r = await fetch(`${base}/models`, { headers: apiKey ? { Authorization: `Bearer ${apiKey}` } : {} });
+      const r = await fetch(`${base}/models`, { headers: apiKey ? { Authorization: `Bearer ${apiKey}` } : {}, redirect: "error" });
       if (!r.ok) throw new Error(`Provider menjawab ${r.status}`);
       models = ((await r.json()).data ?? []).map((m: any) => ({ id: m.id, name: m.name ?? m.id }));
     }

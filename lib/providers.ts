@@ -15,14 +15,34 @@ export const PRESETS: Preset[] = [
 export const preset = (id: string) => PRESETS.find((p) => p.id === id) ?? PRESETS[3];
 export const normalizeBaseURL = (url: string) => url.trim().replace(/\/$/, "");
 
-/** Tolak URL non-http dan, di production, alamat lokal/privat (cegah SSRF). */
-export function assertSafeURL(raw: string) {
+const PROD_HOSTS = new Set([
+  "api.anthropic.com",
+  "api.x.ai",
+  "api.groq.com",
+  "openrouter.ai",
+  "api.openai.com",
+  "generativelanguage.googleapis.com",
+]);
+
+function allowedHosts() {
+  const extra = (process.env.ALLOWED_PROVIDER_HOSTS ?? "")
+    .split(",")
+    .map((h) => h.trim().toLowerCase())
+    .filter(Boolean);
+  return extra.length ? new Set([...PROD_HOSTS, ...extra]) : PROD_HOSTS;
+}
+
+/** Tolak URL non-http dan, di production, host di luar allowlist (cegah SSRF). */
+export function assertSafeURL(raw: string, production = process.env.NODE_ENV === "production") {
   const u = new URL(raw);
   if (!/^https?:$/.test(u.protocol)) throw new Error("Base URL harus http(s).");
-  if (process.env.NODE_ENV === "production") {
-    const h = u.hostname;
-    if (/^(localhost|127\.|10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.|169\.254\.|0\.|\[?::1)/.test(h) || h.endsWith(".local"))
-      throw new Error("Alamat lokal/privat tidak diizinkan di server production.");
+  if (u.username || u.password) throw new Error("Base URL tidak boleh berisi kredensial.");
+  if (production) {
+    if (u.protocol !== "https:") throw new Error("Base URL harus https di production.");
+    if (!allowedHosts().has(u.hostname.toLowerCase()))
+      throw new Error("Host provider tidak diizinkan. Tambahkan ke ALLOWED_PROVIDER_HOSTS.");
   }
   return u.toString().replace(/\/$/, "");
 }
+
+export const noRedirectFetch: typeof fetch = (input, init) => fetch(input, { ...init, redirect: "error" });

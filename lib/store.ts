@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
-export interface Msg { role: "user" | "assistant"; content: string; time: string; thought?: string; spoke?: boolean }
+export interface Msg { role: "user" | "assistant"; content: string; time: string; thought?: string; spoke?: boolean; sig?: string }
 export interface Convo { id: string; title: string; msgs: Msg[] }
 
 export interface Settings {
@@ -50,7 +50,7 @@ export const useApp = create<State>()(persist((set) => ({
   patchLast: (id, p) => set((s) => ({ convos: s.convos.map((c) => c.id !== id ? c : {
     ...c, msgs: c.msgs.map((m, i) => (i === c.msgs.length - 1 ? { ...m, ...p } : m)) }) })),
   edit: (id, index, content) => set((s) => ({ convos: s.convos.map((c) => c.id !== id ? c : {
-    ...c, msgs: c.msgs.map((m, i) => (i === index ? { ...m, content } : m)) }) })),
+    ...c, msgs: c.msgs.map((m, i) => (i === index ? { ...m, content, sig: undefined } : m)) }) })),
 }), {
   name: "reze-voice",
   partialize: ({ apiKey, ...rest }) => rest,

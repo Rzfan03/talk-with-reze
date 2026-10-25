@@ -11,14 +11,18 @@ const DEV_SECRET = "reze-voice-local-development-secret-change-me";
 
 let cached: Buffer | null = null;
 
-function derive() {
-  if (cached) return cached;
+export function serverSecret() {
   const secret =
     process.env.SESSION_SECRET ||
     process.env.ELEVENLABS_API_KEY ||
     (process.env.NODE_ENV !== "production" ? DEV_SECRET : "");
   if (!secret) throw new Error("SESSION_SECRET belum diatur di server.");
-  cached = scryptSync(secret, "reze-voice-key", 32);
+  return secret;
+}
+
+function derive() {
+  if (cached) return cached;
+  cached = scryptSync(serverSecret(), "reze-voice-key", 32);
   return cached;
 }
 

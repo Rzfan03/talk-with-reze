@@ -17,6 +17,8 @@ import { Avatar, type VState } from "./Avatar";
 import SettingsDialog from "./SettingsDialog";
 import ConfirmDialog from "./ConfirmDialog";
 
+const SIG_MARK = "\u0000";
+
 const REZE = "/avatars/reze.jpg", DENJI = "/avatars/denji.jpg";
 const hm = () => new Date().toTimeString().slice(0, 5);
 const PLACEHOLDER: Record<VState, string> = {
@@ -155,33 +157,40 @@ export default function ChatApp() {
     if (!st.model) { setOpenS(true); toast.error("Pilih provider dan model dulu."); return; }
     const id = st.currentId!;
     const history = [...(st.convos.find((c) => c.id === id)?.msgs ?? []), { role: "user", content: text } as Msg]
-      .map((m) => ({ role: m.role, content: m.content }));
+      .map((m) => (m.role === "assistant" && m.sig
+        ? { role: m.role, content: m.content, sig: m.sig }
+        : { role: m.role, content: m.content }));
     setInput(""); setBusy(true); streaming.current = true; setVs("thinking"); getPlayer().stop();
     st.push(id, { role: "user", content: text, time: hm() });
     st.push(id, { role: "assistant", content: "", time: hm() });
 
-    const t0 = Date.now(); let full = "", first = true;
+    const t0 = Date.now(); let acc = "", first = true;
     const prose = new ProseStream();
     try {
       const p = preset(st.provider);
       const res = await fetch("/api/chat", { method: "POST", headers: { "content-type": "application/json" },
-        body: JSON.stringify({ provider: { kind: p.kind, baseURL: st.baseURL, modelId: st.model }, messages: history }) });
+        body: JSON.stringify({ provider: { kind: p.kind, baseURL: st.baseURL, modelId: st.model }, messages: history, conversationId: id }) });
       if (!res.ok || !res.body) throw new Error((await res.text()) || "Gagal memanggil model.");
       const reader = res.body.getReader(), dec = new TextDecoder();
       for (;;) {
         const { done, value } = await reader.read();
         if (done) break;
         const chunk = dec.decode(value, { stream: true });
-        full += chunk;
-        const patch: Partial<Msg> = { content: full };
+        acc += chunk;
+        const content = acc.split(SIG_MARK)[0];
+        const patch: Partial<Msg> = { content };
         if (first) { patch.thought = ((Date.now() - t0) / 1000).toFixed(1); first = false; if (!st.voiceOn) setVs("idle"); }
         useApp.getState().patchLast(id, patch);
-        if (st.voiceOn) prose.push(chunk).forEach((x) => getPlayer().say(x));
+        if (st.voiceOn) prose.push(chunk.split(SIG_MARK)[0]).forEach((x) => getPlayer().say(x));
       }
-      if (!full.trim()) throw new Error("Model tidak mengirim balasan. Cek API key dan nama model.");
+      const content = acc.split(SIG_MARK)[0];
+      const sig = acc.includes(SIG_MARK) ? acc.slice(acc.indexOf(SIG_MARK) + 1).trim() || undefined : undefined;
+      if (!content.trim()) throw new Error("Model tidak mengirim balasan. Cek API key dan nama model.");
+      useApp.getState().patchLast(id, { content, sig });
       if (st.voiceOn) prose.flush().forEach((x) => getPlayer().say(x));
     } catch (e: any) {
-      useApp.getState().patchLast(id, { content: full || `⚠ ${e.message}`, thought: undefined });
+      const content = acc.split(SIG_MARK)[0];
+      useApp.getState().patchLast(id, { content: content || `⚠ ${e.message}`, thought: undefined });
       setVs("idle");
     } finally {
       streaming.current = false; setBusy(false);
