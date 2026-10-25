@@ -7,7 +7,7 @@ import { SITE_DESC, SITE_NAME, SITE_URL } from "@/lib/site";
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 const jb = JetBrains_Mono({ subsets: ["latin"], variable: "--font-jb" });
 
-const title = "Talk With Reze — Chat Suara AI dengan Avatar";
+const title = "Talk With Reze!";
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),

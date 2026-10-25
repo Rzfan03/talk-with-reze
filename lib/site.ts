@@ -1,6 +1,6 @@
 export const SITE_NAME = "Talk With Reze";
 export const SITE_DESC =
-  "Ngobrol pakai suara dengan Reze, avatar AI yang bergerak saat bicara. Balasan dibacakan ElevenLabs dan percakapan waspada layar basah - from developer.";
+  "Deeptalk lahh bersama your bini reze, waspada layar basah pantekk!";
 export const SITE_URL = (
   process.env.NEXT_PUBLIC_SITE_URL ||
   (process.env.VERCEL_PROJECT_PRODUCTION_URL
