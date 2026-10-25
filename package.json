@@ -1,0 +1,33 @@
+{
+  "name": "reze-voice",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "test": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --test lib/*.test.ts"
+  },
+  "dependencies": {
+    "@ai-sdk/anthropic": "^2.0.0",
+    "@ai-sdk/google": "^2.0.0",
+    "@ai-sdk/openai-compatible": "^1.0.0",
+    "@streamdown/code": "^2.0.0",
+    "ai": "^5.0.0",
+    "gsap": "^3.13.0",
+    "lucide-react": "latest",
+    "next": "^15.5.0",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "react-hot-toast": "^2.6.1",
+    "streamdown": "^2.7.1",
+    "zustand": "^5.0.0"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4.1.0",
+    "@types/node": "^22.0.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "tailwindcss": "^4.1.0",
+    "typescript": "^5.6.0"
+  }
+}

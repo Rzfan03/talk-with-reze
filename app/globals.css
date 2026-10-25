@@ -1,0 +1,28 @@
+@import "tailwindcss";
+@source "../node_modules/streamdown/dist/*.js";
+@source "../node_modules/@streamdown/code/dist/*.js";
+@theme {
+  --color-bg:#0b0b0b; --color-sb:#101010; --color-ln:#222; --color-ln2:#303030;
+  --color-tx:#ededed; --color-mu:#8c8c8c; --color-el:#1a1a1a; --color-act:#060606;
+  --font-sans: var(--font-inter), system-ui, sans-serif;
+  --font-mono: var(--font-jb), ui-monospace, monospace;
+}
+@theme inline {
+  --color-background: var(--color-bg);
+  --color-foreground: var(--color-tx);
+  --color-border: var(--color-ln2);
+  --color-sidebar: var(--color-sb);
+  --color-muted: var(--color-el);
+  --color-muted-foreground: var(--color-mu);
+  --color-primary: var(--color-tx);
+  --color-primary-foreground: var(--color-bg);
+}
+html, body { height: 100%; }
+body { background: var(--color-bg); color: var(--color-tx); font-size: 14px; -webkit-font-smoothing: antialiased; }
+dialog { transform-origin: center; }
+dialog::backdrop { background: #000a; }
+@media (prefers-reduced-motion: no-preference) {
+  dialog[open]::backdrop { animation: reze-backdrop 0.2s ease-out; }
+}
+@keyframes reze-backdrop { from { opacity: 0; } }
+[data-streamdown="code-block"] { max-width: var(--chat-code-width, 100%); }
