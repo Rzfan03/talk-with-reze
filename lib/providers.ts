@@ -1,10 +1,11 @@
 export type Kind = "openai-compatible" | "anthropic" | "google";
+export const GROQ_BASE_URL = "https://api.groq.com/openai/v1";
 export interface Preset { id: string; name: string; kind: Kind; baseURL: string; needKey: boolean }
 
 export const PRESETS: Preset[] = [
   { id: "anthropic",  name: "Claude (Anthropic)", kind: "anthropic",         baseURL: "https://api.anthropic.com/v1", needKey: true },
   { id: "xai",        name: "Grok (xAI)",         kind: "openai-compatible", baseURL: "https://api.x.ai/v1", needKey: true },
-  { id: "groq",       name: "Groq",               kind: "openai-compatible", baseURL: "https://api.groq.com/openai/v1", needKey: true },
+  { id: "groq",       name: "Groq",               kind: "openai-compatible", baseURL: GROQ_BASE_URL, needKey: true },
   { id: "openrouter", name: "OpenRouter",         kind: "openai-compatible", baseURL: "https://openrouter.ai/api/v1", needKey: true },
   { id: "openai",     name: "OpenAI",             kind: "openai-compatible", baseURL: "https://api.openai.com/v1", needKey: true },
   { id: "google",     name: "Gemini (Google)",    kind: "google",            baseURL: "https://generativelanguage.googleapis.com/v1beta", needKey: true },

@@ -6,7 +6,7 @@ import gsap from "gsap";
 import { Streamdown, type ControlsConfig, type StreamdownTranslations } from "streamdown";
 import { code } from "@streamdown/code";
 import { useApp, PERSONA, type Msg } from "@/lib/store";
-import { preset } from "@/lib/providers";
+import { GROQ_BASE_URL, preset } from "@/lib/providers";
 import { TTSPlayer, micMessage, startMic } from "@/lib/voice";
 import { ProseStream, segments } from "@/lib/format";
 import { layout } from "@/lib/layout";
@@ -76,10 +76,39 @@ export default function ChatApp() {
     const a = useApp.getState();
     if (!a.convos.length) a.newConvo(); else if (!a.currentId) a.select(a.convos[0].id);
 
-    if (!a.apiKey.trim()) return;
-    a.setCfg({ apiKey: "" });
-    toast.error("API key lama dihapus dari browser. Masukkan key baru di Pengaturan.");
-    setOpenS(true);
+    const legacy = a.apiKey.trim();
+    if (legacy) {
+      a.setCfg({ apiKey: "" });
+      toast.error("API key lama dihapus dari browser.");
+    }
+    if (a.model) {
+      if (legacy) setOpenS(true);
+      return;
+    }
+
+    let alive = true;
+    (async () => {
+      const info = await fetch("/api/key").then((r) => r.json()).catch(() => null);
+      if (!alive) return;
+      if (!info || info.hasKey || !info.demoBaseURLs?.includes(GROQ_BASE_URL)) {
+        if (legacy) setOpenS(true);
+        return;
+      }
+
+      useApp.getState().setCfg({ provider: "groq", baseURL: GROQ_BASE_URL });
+      const data = await fetch("/api/models", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ kind: "openai-compatible", baseURL: GROQ_BASE_URL }),
+      }).then((r) => (r.ok ? r.json() : null)).catch(() => null);
+      if (!alive || useApp.getState().model) return;
+
+      const models: { id: string }[] = Array.isArray(data?.models) ? data.models : [];
+      const model = models.find((m) => /llama-3\.1-8b-instant/.test(m.id))?.id ?? models[0]?.id;
+      useApp.getState().setCfg({ model: model ?? "llama-3.1-8b-instant" });
+    })();
+
+    return () => { alive = false; };
   }, []);
   useEffect(() => { thread.current?.scrollTo({ top: thread.current.scrollHeight }); }, [s.convos, vs]);
   useEffect(() => { setEditing(null); }, [s.currentId]);
