@@ -12,6 +12,7 @@ export const PRESETS: Preset[] = [
   { id: "custom",     name: "Custom (OpenAI-compatible)", kind: "openai-compatible", baseURL: "", needKey: false },
 ];
 export const preset = (id: string) => PRESETS.find((p) => p.id === id) ?? PRESETS[3];
+export const normalizeBaseURL = (url: string) => url.trim().replace(/\/$/, "");
 
 /** Tolak URL non-http dan, di production, alamat lokal/privat (cegah SSRF). */
 export function assertSafeURL(raw: string) {

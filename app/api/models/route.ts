@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { assertSafeURL, type Kind } from "@/lib/providers";
 import { readKeyFor } from "@/lib/key-cookie";
+import { demoKeyFor } from "@/lib/default-keys";
+import { clientIP, take } from "@/lib/rate-limit";
 
 type Model = { id: string; name: string };
 
@@ -10,7 +12,11 @@ export async function POST(req: Request) {
   try {
     const { kind, baseURL } = (await req.json()) as { kind: Kind; baseURL: string };
     const base = assertSafeURL(baseURL);
-    const apiKey = (await readKeyFor(base)) ?? undefined;
+    const userKey = await readKeyFor(base);
+    const apiKey = userKey ?? demoKeyFor(base);
+    if (!userKey && apiKey && !take(`demo-models:${clientIP(req)}`, 30, 3_600_000)) {
+      return NextResponse.json({ error: "Batas demo tercapai. Coba lagi nanti." }, { status: 429, headers: noStore });
+    }
     if (!apiKey && kind !== "openai-compatible") throw new Error("API key untuk provider ini belum diatur.");
     let models: Model[] = [];
 

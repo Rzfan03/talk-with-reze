@@ -309,7 +309,6 @@ export default function ChatApp() {
                       <div className="flex items-center gap-2.5 rounded-[10px] border border-ln2 px-3.5 py-2 text-xs text-mu" style={{ maxWidth: layout.tts }}>
                         <CircleCheck size={16} className="text-emerald-500" />
                         <code className="flex-1 font-mono font-medium text-tx">tts.speak</code>
-                        <span>ElevenLabs</span>
                       </div>
                     )}
                     <div className="flex min-h-[22px] flex-col gap-3" style={{ maxWidth: layout.text }}>

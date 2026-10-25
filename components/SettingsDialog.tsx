@@ -3,11 +3,10 @@ import { useEffect, useRef, useState } from "react";
 import gsap from "gsap";
 import { Check, RefreshCw, X } from "lucide-react";
 import { useApp, pickSettings, type Settings } from "@/lib/store";
-import { PRESETS, preset } from "@/lib/providers";
+import { PRESETS, preset, normalizeBaseURL } from "@/lib/providers";
 
 const inp = "w-full rounded-[10px] border border-ln2 bg-bg px-3 py-2 outline-none focus:border-mu";
 const lab = "mb-1 block text-xs text-mu";
-const norm = (url: string) => url.replace(/\/$/, "");
 
 export default function SettingsDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
   const ref = useRef<HTMLDialogElement>(null);
@@ -18,8 +17,10 @@ export default function SettingsDialog({ open, onClose }: { open: boolean; onClo
   const [q, setQ] = useState(""), [st, setSt] = useState(""), [busy, setBusy] = useState(false);
   const [key, setKey] = useState(""), [keyBusy, setKeyBusy] = useState(false);
   const [saved, setSaved] = useState<{ hasKey: boolean; baseURL: string | null }>({ hasKey: false, baseURL: null });
+  const [demo, setDemo] = useState<string[]>([]);
   const up = (p: Partial<Settings>) => setD((x) => ({ ...x, ...p }));
-  const keyReady = saved.hasKey && saved.baseURL === norm(d.baseURL);
+  const keyReady = saved.hasKey && saved.baseURL === normalizeBaseURL(d.baseURL);
+  const demoReady = demo.includes(normalizeBaseURL(d.baseURL));
 
   useEffect(() => {
     const el = ref.current; if (!el) return;
@@ -27,10 +28,10 @@ export default function SettingsDialog({ open, onClose }: { open: boolean; onClo
     const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
     if (open) {
       setD(pickSettings(useApp.getState())); setModels([]); setSt(""); setQ(""); setKey("");
-      setSaved({ hasKey: false, baseURL: null });
+      setSaved({ hasKey: false, baseURL: null }); setDemo([]);
       fetch("/api/key")
         .then((r) => r.json())
-        .then((j) => setSaved({ hasKey: !!j.hasKey, baseURL: j.baseURL ?? null }))
+        .then((j) => { setSaved({ hasKey: !!j.hasKey, baseURL: j.baseURL ?? null }); setDemo(j.demoBaseURLs ?? []); })
         .catch(() => {});
       if (!el.open) {
         gsap.set(el, reduce ? { opacity: 1, x: 0, scale: 1 } : { opacity: 0, y: 12, scale: 0.98 });
@@ -64,7 +65,7 @@ export default function SettingsDialog({ open, onClose }: { open: boolean; onClo
       const j = await r.json().catch(() => ({}));
       if (!r.ok) throw new Error(j.error ?? "Gagal menyimpan API key.");
       setKey("");
-      setSaved({ hasKey: true, baseURL: j.baseURL ?? norm(d.baseURL) });
+      setSaved({ hasKey: true, baseURL: j.baseURL ?? normalizeBaseURL(d.baseURL) });
       return true;
     } finally {
       setKeyBusy(false);
@@ -87,7 +88,7 @@ export default function SettingsDialog({ open, onClose }: { open: boolean; onClo
 
   async function load() {
     const p = preset(d.provider);
-    if (p.needKey && !key.trim() && !keyReady) return setSt("Isi API key dulu.");
+    if (p.needKey && !key.trim() && !keyReady && !demoReady) return setSt("Isi API key dulu.");
     setBusy(true); setSt("Memuat model…");
     try {
       if (key.trim()) await saveKey();
@@ -101,7 +102,7 @@ export default function SettingsDialog({ open, onClose }: { open: boolean; onClo
 
   async function save() {
     const p = preset(d.provider);
-    if (p.needKey && !key.trim() && !keyReady) return setSt("Isi API key dulu.");
+    if (p.needKey && !key.trim() && !keyReady && !demoReady) return setSt("Isi API key dulu.");
     setBusy(true); setSt("");
     try {
       if (key.trim()) await saveKey();
@@ -137,8 +138,8 @@ export default function SettingsDialog({ open, onClose }: { open: boolean; onClo
               {keyReady && <button type="button" onClick={dropKey} disabled={keyBusy} className="text-xs text-mu hover:text-tx disabled:opacity-50">Hapus key</button>}
             </div>
             <input className={inp} type="password" autoComplete="off" value={key} onChange={(e) => setKey(e.target.value)} disabled={keyBusy}
-              placeholder={keyReady ? "Tersimpan — isi untuk mengganti" : "Tempel API key di sini"} />
-            <p className="mt-1 text-[11px] text-mu">{keyReady ? "Tersimpan terenkripsi di server (HttpOnly)." : "Disimpan terenkripsi di server, bukan di browser."}</p>
+              placeholder={keyReady ? "Tersimpan — isi untuk mengganti" : demoReady ? "Kosongkan untuk memakai key demo" : "Tempel API key di sini"} />
+            <p className="mt-1 text-[11px] text-mu">{keyReady ? "Tersimpan terenkripsi di server (HttpOnly)." : demoReady ? "Key demo server tersedia. Kosongkan untuk memakainya." : "Disimpan terenkripsi di server, bukan di browser."}</p>
           </div>
           <div className="flex items-center gap-3">
             <button onClick={load} disabled={busy} className="inline-flex items-center gap-2 rounded-[10px] bg-el px-3.5 py-2 font-medium disabled:opacity-60"><RefreshCw size={16} className={busy ? "animate-spin" : ""} />Muat model</button>

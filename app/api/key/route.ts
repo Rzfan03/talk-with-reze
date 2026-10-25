@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { assertSafeURL } from "@/lib/providers";
 import { clearKey, readStoredKey, saveKey } from "@/lib/key-cookie";
+import { demoBaseURLs } from "@/lib/default-keys";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -10,9 +11,9 @@ const noStore = { "cache-control": "no-store" };
 export async function GET() {
   try {
     const stored = await readStoredKey();
-    return NextResponse.json({ hasKey: !!stored, baseURL: stored?.baseURL ?? null }, { headers: noStore });
+    return NextResponse.json({ hasKey: !!stored, baseURL: stored?.baseURL ?? null, demoBaseURLs: demoBaseURLs() }, { headers: noStore });
   } catch {
-    return NextResponse.json({ hasKey: false, error: "Penyimpanan key belum siap." }, { status: 500, headers: noStore });
+    return NextResponse.json({ hasKey: false, error: "Penyimpanan key belum siap.", demoBaseURLs: demoBaseURLs() }, { status: 500, headers: noStore });
   }
 }
 

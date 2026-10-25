@@ -32,11 +32,12 @@ Buka http://localhost:3000. Klik ikon pengaturan, pilih provider, tempel API key
 | Variabel | Wajib | Fungsi |
 | --- | --- | --- |
 | `SESSION_SECRET` | Ya di production | Kunci enkripsi API key provider di cookie. Buat dengan `openssl rand -hex 32`. Di lokal ada fallback aman untuk development. |
+| `DEMO_GROQ_API_KEY` | Tidak | Key Groq demo yang dipakai server untuk user tanpa key sendiri. Key tidak pernah dikirim ke browser. Provider lain bisa memakai `DEMO_ANTHROPIC_API_KEY`, `DEMO_XAI_API_KEY`, `DEMO_OPENROUTER_API_KEY`, `DEMO_OPENAI_API_KEY`, atau `DEMO_GOOGLE_API_KEY`. |
 | `ELEVENLABS_API_KEY` | Tidak | Dipakai untuk TTS dan STT. Tanpa ini, suara balasan memakai TTS browser dan STT fallback tidak tersedia. |
 | `ELEVENLABS_VOICE_ID` | Tidak | Voice default ElevenLabs. Bisa juga diisi lewat menu Pengaturan. |
 | `NEXT_PUBLIC_SITE_URL` | Tidak | URL publik untuk canonical, sitemap, dan OG image. Di Vercel biasanya otomatis. |
 
-API key provider model disimpan terenkripsi di cookie `HttpOnly` di server, bukan di localStorage. Key tidak ikut dikirim di body `/api/chat`, hanya dibaca oleh route handler. Key yang tersimpan di localStorage versi lama akan dihapus saat aplikasi dibuka dan perlu dimasukkan ulang. Key ElevenLabs tetap di server. Ganti nama file OG image setiap kali gambarnya berubah supaya cache sosial media tidak menampilkan versi lama.
+API key provider model disimpan terenkripsi di cookie `HttpOnly` di server, bukan di localStorage. Key demo provider juga hanya ada di server dan dipakai sebagai fallback saat user belum menyimpan key sendiri; key demo tidak pernah ikut ke browser. Key tidak ikut dikirim di body `/api/chat`, hanya dibaca oleh route handler. Key yang tersimpan di localStorage versi lama akan dihapus saat aplikasi dibuka dan perlu dimasukkan ulang. Key ElevenLabs tetap di server. Ganti nama file OG image setiap kali gambarnya berubah supaya cache sosial media tidak menampilkan versi lama. Chat yang memakai key demo dibatasi per IP.
 
 ## Cara kerja
 
