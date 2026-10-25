@@ -7,6 +7,9 @@ import { Streamdown, type ControlsConfig, type StreamdownTranslations } from "st
 import { code } from "@streamdown/code";
 import { useApp, PERSONA, type Msg } from "@/lib/store";
 import { GROQ_BASE_URL, preset } from "@/lib/providers";
+
+const GROQ_DEMO_MODEL = "openai/gpt-oss-120b";
+const GROQ_OLD_DEMO_MODEL = "llama-3.1-8b-instant";
 import { TTSPlayer, micMessage, startMic } from "@/lib/voice";
 import { ProseStream, segments } from "@/lib/format";
 import { layout } from "@/lib/layout";
@@ -81,7 +84,8 @@ export default function ChatApp() {
       a.setCfg({ apiKey: "" });
       toast.error("API key lama dihapus dari browser.");
     }
-    if (a.model) {
+    const staleDemo = a.provider === "groq" && a.baseURL === GROQ_BASE_URL && a.model === GROQ_OLD_DEMO_MODEL;
+    if (a.model && !staleDemo) {
       if (legacy) setOpenS(true);
       return;
     }
@@ -101,11 +105,12 @@ export default function ChatApp() {
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ kind: "openai-compatible", baseURL: GROQ_BASE_URL }),
       }).then((r) => (r.ok ? r.json() : null)).catch(() => null);
-      if (!alive || useApp.getState().model) return;
+      const cur = useApp.getState();
+      if (!alive || (cur.model && cur.model !== GROQ_OLD_DEMO_MODEL)) return;
 
       const models: { id: string }[] = Array.isArray(data?.models) ? data.models : [];
-      const model = models.find((m) => /llama-3\.1-8b-instant/.test(m.id))?.id ?? models[0]?.id;
-      useApp.getState().setCfg({ model: model ?? "llama-3.1-8b-instant" });
+      const model = models.find((m) => m.id.includes("gpt-oss-120b"))?.id ?? models[0]?.id;
+      useApp.getState().setCfg({ model: model ?? GROQ_DEMO_MODEL });
     })();
 
     return () => { alive = false; };
