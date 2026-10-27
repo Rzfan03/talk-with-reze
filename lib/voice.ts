@@ -16,7 +16,7 @@ export class TTSPlayer {
     if (this.warned) return;
     this.warned = true;
     if (status === 501) toast("Suara server belum diatur, memakai suara browser.");
-    else toast.error("Server TTS gagal (mis. kuota ElevenLabs habis). Sementara memakai suara browser.");
+    else toast.error("Server TTS gagal, memakai suara browser.");
   }
 
   private ensure() {
