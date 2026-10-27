@@ -1,3 +1,5 @@
+import { toast } from "react-hot-toast";
+
 /** Level audio (0..1) yang dibaca avatar GSAP untuk lip-sync sederhana. */
 export const level = { v: 0 };
 
@@ -7,7 +9,15 @@ interface VoiceCfg { voiceId: string; voiceModel: string }
 export class TTSPlayer {
   private ctx?: AudioContext; private an?: AnalyserNode; private src?: AudioBufferSourceNode;
   private chain: Promise<void> = Promise.resolve(); private pending = 0; private gen = 0; private raf = 0;
+  private warned = false;
   constructor(private cfg: () => VoiceCfg, private onState: (s: "speaking" | "idle") => void) {}
+
+  private warnFallback(status: number) {
+    if (this.warned) return;
+    this.warned = true;
+    if (status === 501) toast("Suara server belum diatur, memakai suara browser.");
+    else toast.error("Server TTS gagal (mis. kuota ElevenLabs habis). Sementara memakai suara browser.");
+  }
 
   private ensure() {
     if (!this.ctx) {
@@ -24,7 +34,7 @@ export class TTSPlayer {
     const audio = fetch("/api/tts", {
       method: "POST", headers: { "content-type": "application/json" },
       body: JSON.stringify({ text, voiceId: c.voiceId, modelId: c.voiceModel }),
-    }).then((r) => (r.ok ? r.arrayBuffer() : null)).then((b) => (b ? this.ctx!.decodeAudioData(b) : null)).catch(() => null);
+    }).then((r) => (r.ok ? r.arrayBuffer() : (this.warnFallback(r.status), null))).then((b) => (b ? this.ctx!.decodeAudioData(b) : null)).catch(() => null);
     this.pending++; this.onState("speaking");
     this.chain = this.chain.then(async () => {
       if (g !== this.gen) return;
